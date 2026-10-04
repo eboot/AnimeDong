@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">AnimeDong</string>
+    <string name="nav_home">Beranda</string>
+    <string name="nav_schedule">Jadwal</string>
+    <string name="nav_library">Koleksi</string>
+    <string name="nav_profile">Profil</string>
+    <string name="search_hint">Cari donghua, genre, karakter...</string>
+    <string name="watch_now">Tonton Sekarang</string>
+    <string name="ongoing">Ongoing</string>
+    <string name="completed">Tamat</string>
+</resources>

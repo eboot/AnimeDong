@@ -1,0 +1,6 @@
+{
+  "summary":  "Rencana implementasi integrasi autentikasi Google Sign-In menggunakan Android Credential Manager tanpa Firebase untuk aplikasi AnimeDong, termasuk sinkronisasi data profil, sinkronisasi daftar Favorit dan Riwayat tontonan ke profil pengguna di Room Database.",
+  "updatedAt":  "2026-10-04T10:17:28.528834033Z",
+  "requestFeedback":  true,
+  "userFacing":  true
+}

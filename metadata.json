@@ -1,0 +1,6 @@
+{
+  "name": "AnimeDong",
+  "description": "Nonton Donghua dan Anime sub Indo gratis, terlengkap, dan update episode harian dengan pemutar video interaktif.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
