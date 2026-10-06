@@ -22,14 +22,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.BookmarkBorder
-import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
@@ -37,15 +35,14 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -63,524 +60,377 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.example.data.model.Donghua
-import com.example.data.model.Episode
-import com.example.ui.components.DonghuaCard
+import com.example.domain.model.EpisodeInfo
 import com.example.ui.components.SectionHeader
-import com.example.ui.theme.DongHiveBadgeOngoing
-import com.example.ui.theme.DongHiveBg
-import com.example.ui.theme.DongHiveCard
-import com.example.ui.theme.DongHiveCardBorder
-import com.example.ui.theme.DongHiveGold
-import com.example.ui.theme.DongHiveOrange
-import com.example.ui.theme.DongHiveSurface
-import com.example.ui.theme.DongHiveTextMuted
-import com.example.ui.theme.DongHiveTextPrimary
-import com.example.ui.theme.DongHiveTextSecondary
-import com.example.viewmodel.DongHiveViewModel
+import com.example.ui.theme.AnimeDongBadgeOngoing
+import com.example.ui.theme.AnimeDongBg
+import com.example.ui.theme.AnimeDongCard
+import com.example.ui.theme.AnimeDongCardBorder
+import com.example.ui.theme.AnimeDongGold
+import com.example.ui.theme.AnimeDongOrange
+import com.example.ui.theme.AnimeDongSurface
+import com.example.ui.theme.AnimeDongTextMuted
+import com.example.ui.theme.AnimeDongTextPrimary
+import com.example.ui.theme.AnimeDongTextSecondary
+import com.example.viewmodel.AnimeDongViewModel
 
 @Composable
 fun DetailScreen(
-    viewModel: DongHiveViewModel,
+    viewModel: AnimeDongViewModel,
     modifier: Modifier = Modifier
 ) {
-    val donghua = viewModel.selectedDonghua.collectAsState().value ?: return
-    val episodes = viewModel.episodesList.collectAsState().value
-    val isFav by viewModel.isFavorite.collectAsState()
+    val anime = viewModel.selectedAnime.collectAsState().value ?: return
+    val detail = viewModel.selectedAnimeDetail.collectAsState().value
+    val isDetailLoading by viewModel.isDetailLoading.collectAsState()
+    val isBookmarked by viewModel.isBookmarked.collectAsState()
     val context = LocalContext.current
 
     var isSynopsisExpanded by remember { mutableStateOf(false) }
-    var selectedRangeIndex by remember { mutableIntStateOf(0) }
 
-    // Intercept hardware and gesture back
     BackHandler {
-        viewModel.handleBack()
-    }
-
-    val relatedDonghua = viewModel.repository.getAllDonghua().filter { it.id != donghua.id }.take(5)
-
-    // Calculate episode range chunks (e.g. 25 eps per tab)
-    val chunkSize = 25
-    val chunks = episodes.chunked(chunkSize)
-
-    val currentChunk = if (chunks.isNotEmpty() && selectedRangeIndex in chunks.indices) {
-        chunks[selectedRangeIndex]
-    } else {
-        episodes
+        viewModel.navigateBack()
     }
 
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
-            .background(DongHiveBg)
+            .background(AnimeDongBg)
             .testTag("detail_screen_content"),
-        contentPadding = PaddingValues(bottom = 80.dp)
+        contentPadding = PaddingValues(bottom = 40.dp)
     ) {
-        // Hero Backdrop with Top Bar
+        // Hero Banner & Poster
         item {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(280.dp)
             ) {
+                // Background Poster Scrim
                 AsyncImage(
                     model = ImageRequest.Builder(context)
-                        .data(donghua.bannerUrl)
+                        .data(anime.poster)
                         .crossfade(true)
                         .build(),
-                    contentDescription = donghua.title,
+                    contentDescription = anime.title,
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
                 )
 
-                // Scrim gradients
+                // Gradient scrim overlay
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .background(
                             Brush.verticalGradient(
                                 colors = listOf(
-                                    Color(0x99000000),
-                                    Color.Transparent,
-                                    DongHiveBg
+                                    Color(0x990B0D14),
+                                    Color(0xEE0B0D14),
+                                    AnimeDongBg
                                 )
                             )
                         )
                 )
 
-                // Top Bar with Back and Share
+                // Top Bar with back button
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 8.dp, vertical = 12.dp)
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
                         .align(Alignment.TopCenter),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     IconButton(
-                        onClick = { viewModel.handleBack() },
+                        onClick = { viewModel.navigateBack() },
                         modifier = Modifier
-                            .background(Color(0x88000000), CircleShape)
+                            .background(Color(0x66000000), CircleShape)
                             .testTag("detail_back_button")
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
+                            contentDescription = "Kembali",
                             tint = Color.White
                         )
                     }
 
                     Row {
                         IconButton(
-                            onClick = {
-                                val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                                    type = "text/plain"
-                                    putExtra(
-                                        Intent.EXTRA_TEXT,
-                                        "Tonton donghua seru ${donghua.title} (${donghua.chineseTitle}) sub Indo di aplikasi AnimeDong!"
-                                    )
-                                }
-                                context.startActivity(Intent.createChooser(shareIntent, "Bagikan Donghua"))
-                            },
-                            modifier = Modifier.background(Color(0x88000000), CircleShape)
+                            onClick = { viewModel.toggleBookmark() },
+                            modifier = Modifier
+                                .background(Color(0x66000000), CircleShape)
+                                .testTag("bookmark_button")
                         ) {
                             Icon(
-                                imageVector = Icons.Default.Share,
-                                contentDescription = "Share",
-                                tint = Color.White
+                                imageVector = if (isBookmarked) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,
+                                contentDescription = "Bookmark",
+                                tint = if (isBookmarked) AnimeDongGold else Color.White
                             )
                         }
 
                         Spacer(modifier = Modifier.width(8.dp))
 
                         IconButton(
-                            onClick = { viewModel.toggleFavorite(donghua) },
+                            onClick = {
+                                val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                    type = "text/plain"
+                                    putExtra(Intent.EXTRA_SUBJECT, anime.title)
+                                    putExtra(
+                                        Intent.EXTRA_TEXT,
+                                        "Nonton ${anime.title} subtitle Indonesia di AnimeDong!"
+                                    )
+                                }
+                                context.startActivity(Intent.createChooser(shareIntent, "Bagikan ke"))
+                            },
                             modifier = Modifier
-                                .background(Color(0x88000000), CircleShape)
-                                .testTag("detail_favorite_button")
+                                .background(Color(0x66000000), CircleShape)
+                                .testTag("share_button")
                         ) {
                             Icon(
-                                imageVector = if (isFav) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,
-                                contentDescription = "Favorite",
-                                tint = if (isFav) DongHiveGold else Color.White
+                                imageVector = Icons.Default.Share,
+                                contentDescription = "Bagikan",
+                                tint = Color.White
                             )
                         }
                     }
                 }
-            }
-        }
 
-        // Donghua Header Info (Poster, Titles, Metadata)
-        item {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .padding(top = 0.dp),
-                verticalAlignment = Alignment.Top
-            ) {
-                // Cover Poster with shadow/border
-                Card(
+                // Poster & Title Info row
+                Row(
                     modifier = Modifier
-                        .size(width = 110.dp, height = 155.dp)
-                        .border(1.5.dp, DongHiveCardBorder, RoundedCornerShape(10.dp)),
-                    shape = RoundedCornerShape(10.dp)
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        .align(Alignment.BottomStart),
+                    verticalAlignment = Alignment.Bottom
                 ) {
-                    AsyncImage(
-                        model = ImageRequest.Builder(context)
-                            .data(donghua.coverUrl)
-                            .crossfade(true)
-                            .build(),
-                        contentDescription = donghua.title,
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
-                    )
-                }
-
-                Spacer(modifier = Modifier.width(16.dp))
-
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = donghua.title,
-                        color = DongHiveTextPrimary,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Black
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = donghua.chineseTitle,
-                        color = DongHiveGold,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    // Status and Rating Row
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Surface(
-                            color = DongHiveBadgeOngoing.copy(alpha = 0.2f),
-                            shape = RoundedCornerShape(4.dp),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, DongHiveBadgeOngoing.copy(alpha = 0.5f))
-                        ) {
-                            Text(
-                                text = donghua.status,
-                                color = DongHiveBadgeOngoing,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.width(8.dp))
-
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.Star,
-                                contentDescription = null,
-                                tint = DongHiveGold,
-                                modifier = Modifier.size(14.dp)
-                            )
-                            Spacer(modifier = Modifier.width(3.dp))
-                            Text(
-                                text = "%.1f".format(donghua.rating),
-                                color = DongHiveGold,
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.width(8.dp))
-
-                        Text(
-                            text = "${donghua.latestEpisode} Episode",
-                            color = DongHiveTextMuted,
-                            fontSize = 12.sp
+                    Card(
+                        modifier = Modifier
+                            .width(100.dp)
+                            .aspectRatio(0.72f),
+                        shape = RoundedCornerShape(10.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, AnimeDongCardBorder)
+                    ) {
+                        AsyncImage(
+                            model = anime.poster,
+                            contentDescription = anime.title,
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(6.dp))
+                    Spacer(modifier = Modifier.width(14.dp))
 
-                    Text(
-                        text = "Studio: ${donghua.studio}",
-                        color = DongHiveTextSecondary,
-                        fontSize = 11.sp,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Text(
-                        text = "Rilis: Setiap ${donghua.releaseDay} ${donghua.releaseTime}",
-                        color = DongHiveTextSecondary,
-                        fontSize = 11.sp
-                    )
-                }
-            }
-        }
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = anime.title,
+                            color = AnimeDongTextPrimary,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
 
-        // Primary Action Buttons
-        item {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 14.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                Button(
-                    onClick = {
-                        val firstEp = episodes.firstOrNull()
-                        if (firstEp != null) {
-                            viewModel.openPlayer(donghua, firstEp)
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Surface(
+                                color = AnimeDongBadgeOngoing,
+                                shape = RoundedCornerShape(4.dp)
+                            ) {
+                                Text(
+                                    text = detail?.status ?: "Ongoing",
+                                    color = Color.White,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                )
+                            }
+
+                            if (detail != null && detail.rating > 0f) {
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Icon(
+                                    imageVector = Icons.Default.Star,
+                                    contentDescription = null,
+                                    tint = AnimeDongGold,
+                                    modifier = Modifier.size(14.dp)
+                                )
+                                Spacer(modifier = Modifier.width(3.dp))
+                                Text(
+                                    text = "%.1f".format(detail.rating),
+                                    color = AnimeDongGold,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
                         }
-                    },
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(44.dp)
-                        .testTag("detail_play_button"),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = DongHiveGold,
-                        contentColor = Color.Black
-                    ),
-                    shape = RoundedCornerShape(10.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.PlayArrow,
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = "Mulai Nonton",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp
-                    )
-                }
 
-                OutlinedButton(
-                    onClick = { viewModel.toggleFavorite(donghua) },
-                    modifier = Modifier.height(44.dp),
-                    shape = RoundedCornerShape(10.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = if (isFav) DongHiveGold else DongHiveTextPrimary
-                    ),
-                    border = androidx.compose.foundation.BorderStroke(
-                        1.dp,
-                        if (isFav) DongHiveGold else DongHiveCardBorder
-                    )
-                ) {
-                    Icon(
-                        imageVector = if (isFav) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = if (isFav) "Tersimpan" else "Favorit",
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
+                        if (detail?.genres?.isNotEmpty() == true) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = detail.genres.joinToString(" • "),
+                                color = AnimeDongTextMuted,
+                                fontSize = 11.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
                 }
             }
         }
 
-        // Synopsis Section
-        item {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .animateContentSize(),
-                colors = CardDefaults.cardColors(containerColor = DongHiveCard),
-                shape = RoundedCornerShape(12.dp),
-                border = androidx.compose.foundation.BorderStroke(1.dp, DongHiveCardBorder)
-            ) {
-                Column(modifier = Modifier.padding(14.dp)) {
+        // Synopsis
+        if (!detail?.synopsis.isNullOrBlank()) {
+            item {
+                Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        text = "Sinopsis Cerita",
-                        color = DongHiveTextPrimary,
-                        fontSize = 14.sp,
+                        text = "Sinopsis",
+                        color = AnimeDongTextPrimary,
+                        fontSize = 15.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = donghua.synopsis,
-                        color = DongHiveTextSecondary,
-                        fontSize = 13.sp,
+                        text = detail?.synopsis.orEmpty(),
+                        color = AnimeDongTextSecondary,
+                        fontSize = 12.sp,
                         lineHeight = 18.sp,
                         maxLines = if (isSynopsisExpanded) Int.MAX_VALUE else 3,
-                        overflow = TextOverflow.Ellipsis
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier
+                            .animateContentSize()
+                            .clickable { isSynopsisExpanded = !isSynopsisExpanded }
                     )
-                    Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = if (isSynopsisExpanded) "Tampilkan Lebih Sedikit" else "Selengkapnya...",
-                        color = DongHiveGold,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.clickable { isSynopsisExpanded = !isSynopsisExpanded }
+                        text = if (isSynopsisExpanded) "Tutup" else "Baca selengkapnya",
+                        color = AnimeDongGold,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier
+                            .clickable { isSynopsisExpanded = !isSynopsisExpanded }
+                            .padding(top = 4.dp)
                     )
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    // Genres tags
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        donghua.genres.forEach { genre ->
-                            Surface(
-                                color = DongHiveSurface,
-                                shape = RoundedCornerShape(6.dp),
-                                border = androidx.compose.foundation.BorderStroke(1.dp, DongHiveCardBorder)
-                            ) {
-                                Text(
-                                    text = genre,
-                                    color = DongHiveTextSecondary,
-                                    fontSize = 11.sp,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                                )
-                            }
-                        }
-                    }
                 }
             }
         }
 
-        // Episode List Section
+        // Episodes Section
         item {
-            Spacer(modifier = Modifier.height(16.dp))
             SectionHeader(
-                title = "Daftar Episode (${episodes.size})",
-                actionText = "Urutkan",
-                onActionClick = { }
+                title = "Daftar Episode",
+                actionText = if (detail?.episodes?.isNotEmpty() == true) "${detail.episodes.size} Episode" else null
             )
         }
 
-        // Episode Chunk Tabs (if more than 25 eps)
-        if (chunks.size > 1) {
+        if (isDetailLoading && detail == null) {
             item {
-                LazyRow(
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(bottom = 10.dp),
-                    contentPadding = PaddingValues(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        .height(140.dp),
+                    contentAlignment = Alignment.Center
                 ) {
-                    itemsIndexed(chunks) { idx, chunk ->
-                        val startEp = chunk.last().episodeNumber
-                        val endEp = chunk.first().episodeNumber
-                        val isSelected = selectedRangeIndex == idx
-                        Surface(
-                            shape = RoundedCornerShape(8.dp),
-                            color = if (isSelected) DongHiveGold else DongHiveCard,
-                            border = if (isSelected) null else androidx.compose.foundation.BorderStroke(1.dp, DongHiveCardBorder),
-                            modifier = Modifier.clickable { selectedRangeIndex = idx }
-                        ) {
-                            Text(
-                                text = "Ep $startEp - $endEp",
-                                color = if (isSelected) Color.Black else DongHiveTextSecondary,
-                                fontSize = 12.sp,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                            )
-                        }
-                    }
+                    CircularProgressIndicator(color = AnimeDongGold)
                 }
             }
-        }
-
-        // Episodes Grid Cards
-        items(currentChunk) { episode ->
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 4.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .clickable { viewModel.openPlayer(donghua, episode) }
-                    .testTag("episode_item_${episode.episodeNumber}"),
-                colors = CardDefaults.cardColors(containerColor = DongHiveCard),
-                border = androidx.compose.foundation.BorderStroke(1.dp, DongHiveCardBorder)
-            ) {
-                Row(
+        } else if (detail?.episodes.isNullOrEmpty()) {
+            item {
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                        .padding(24.dp),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(40.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(DongHiveSurface)
-                                .border(1.dp, DongHiveCardBorder, RoundedCornerShape(8.dp)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.PlayArrow,
-                                contentDescription = null,
-                                tint = DongHiveGold,
-                                modifier = Modifier.size(22.dp)
-                            )
-                        }
+                    Text(
+                        text = "Belum ada episode yang tersedia untuk anime ini.",
+                        color = AnimeDongTextMuted,
+                        fontSize = 13.sp
+                    )
+                }
+            }
+        } else {
+            val episodes = detail?.episodes ?: emptyList()
+            items(episodes, key = { it.episodeId }) { episode ->
+                EpisodeItemCard(
+                    episode = episode,
+                    onClick = { viewModel.playEpisode(episode) }
+                )
+            }
+        }
+    }
+}
 
-                        Spacer(modifier = Modifier.width(12.dp))
-
-                        Column {
-                            Text(
-                                text = "Episode ${episode.episodeNumber}",
-                                color = DongHiveTextPrimary,
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = "${episode.durationMinutes} Menit • Sub Indo • ${episode.releaseDate}",
-                                color = DongHiveTextMuted,
-                                fontSize = 11.sp
-                            )
-                        }
-                    }
-
-                    // Download Action
-                    IconButton(
-                        onClick = { viewModel.downloadEpisode(donghua, episode) }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Download,
-                            contentDescription = "Download Episode",
-                            tint = DongHiveTextSecondary,
-                            modifier = Modifier.size(20.dp)
+@Composable
+fun EpisodeItemCard(
+    episode: EpisodeInfo,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp)
+            .clickable(onClick = onClick)
+            .testTag("episode_item_${episode.episodeId}"),
+        shape = RoundedCornerShape(10.dp),
+        colors = CardDefaults.cardColors(containerColor = AnimeDongCard),
+        border = androidx.compose.foundation.BorderStroke(1.dp, AnimeDongCardBorder)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .background(AnimeDongSurface, CircleShape)
+                        .border(1.dp, AnimeDongCardBorder, CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.PlayArrow,
+                        contentDescription = null,
+                        tint = AnimeDongGold,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                Column {
+                    Text(
+                        text = episode.title,
+                        color = AnimeDongTextPrimary,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    if (episode.date.isNotBlank()) {
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = episode.date,
+                            color = AnimeDongTextMuted,
+                            fontSize = 11.sp
                         )
                     }
                 }
             }
-        }
 
-        // Rekomendasi Terkait Section
-        item {
-            Spacer(modifier = Modifier.height(20.dp))
-            SectionHeader(
-                title = "Donghua Serupa",
-                actionText = null
-            )
-        }
-
-        item {
-            LazyRow(
-                modifier = Modifier.fillMaxWidth(),
-                contentPadding = PaddingValues(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            Surface(
+                color = AnimeDongGold.copy(alpha = 0.15f),
+                shape = RoundedCornerShape(6.dp)
             ) {
-                items(relatedDonghua) { related ->
-                    DonghuaCard(
-                        donghua = related,
-                        onClick = { viewModel.openDetail(related) },
-                        modifier = Modifier.width(130.dp)
-                    )
-                }
+                Text(
+                    text = "Tonton",
+                    color = AnimeDongGold,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                )
             }
         }
     }

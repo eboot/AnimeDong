@@ -18,13 +18,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -43,21 +41,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.example.data.model.Donghua
-import com.example.ui.theme.DongHiveBadgeHot
-import com.example.ui.theme.DongHiveBadgeOngoing
-import com.example.ui.theme.DongHiveCard
-import com.example.ui.theme.DongHiveCardBorder
-import com.example.ui.theme.DongHiveGold
-import com.example.ui.theme.DongHiveOrange
-import com.example.ui.theme.DongHiveSurface
-import com.example.ui.theme.DongHiveTextMuted
-import com.example.ui.theme.DongHiveTextPrimary
-import com.example.ui.theme.DongHiveTextSecondary
+import com.example.domain.model.Anime
+import com.example.ui.theme.AnimeDongBadgeHot
+import com.example.ui.theme.AnimeDongCard
+import com.example.ui.theme.AnimeDongCardBorder
+import com.example.ui.theme.AnimeDongGold
+import com.example.ui.theme.AnimeDongOrange
+import com.example.ui.theme.AnimeDongSurface
+import com.example.ui.theme.AnimeDongTextMuted
+import com.example.ui.theme.AnimeDongTextPrimary
+import com.example.ui.theme.AnimeDongTextSecondary
 
 @Composable
-fun DonghuaCard(
-    donghua: Donghua,
+fun AnimeCard(
+    anime: Anime,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -65,10 +62,10 @@ fun DonghuaCard(
         modifier = modifier
             .clip(RoundedCornerShape(12.dp))
             .clickable(onClick = onClick)
-            .testTag("donghua_card_${donghua.id}"),
+            .testTag("anime_card_${anime.id}"),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = DongHiveCard),
-        border = androidx.compose.foundation.BorderStroke(1.dp, DongHiveCardBorder)
+        colors = CardDefaults.cardColors(containerColor = AnimeDongCard),
+        border = androidx.compose.foundation.BorderStroke(1.dp, AnimeDongCardBorder)
     ) {
         Column {
             Box(
@@ -78,10 +75,10 @@ fun DonghuaCard(
             ) {
                 AsyncImage(
                     model = ImageRequest.Builder(LocalContext.current)
-                        .data(donghua.coverUrl)
+                        .data(anime.poster)
                         .crossfade(true)
                         .build(),
-                    contentDescription = donghua.title,
+                    contentDescription = anime.title,
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
                 )
@@ -94,43 +91,36 @@ fun DonghuaCard(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Rating Badge
-                    Surface(
-                        color = Color(0xCC0B0D14),
-                        shape = RoundedCornerShape(6.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                    if (anime.releaseDay.isNotBlank()) {
+                        Surface(
+                            color = Color(0xCC0B0D14),
+                            shape = RoundedCornerShape(6.dp)
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Star,
-                                contentDescription = null,
-                                tint = DongHiveGold,
-                                modifier = Modifier.size(12.dp)
-                            )
-                            Spacer(modifier = Modifier.width(3.dp))
                             Text(
-                                text = "%.1f".format(donghua.rating),
-                                color = DongHiveTextPrimary,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold
+                                text = anime.releaseDay,
+                                color = AnimeDongGold,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                             )
                         }
+                    } else {
+                        Spacer(modifier = Modifier.size(1.dp))
                     }
 
-                    // Episode Badge
-                    Surface(
-                        color = DongHiveOrange,
-                        shape = RoundedCornerShape(6.dp)
-                    ) {
-                        Text(
-                            text = "Ep ${donghua.latestEpisode}",
-                            color = Color.White,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
-                        )
+                    if (anime.episodes.isNotBlank()) {
+                        Surface(
+                            color = AnimeDongOrange,
+                            shape = RoundedCornerShape(6.dp)
+                        ) {
+                            Text(
+                                text = anime.episodes,
+                                color = Color.White,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
                     }
                 }
 
@@ -153,8 +143,8 @@ fun DonghuaCard(
                 modifier = Modifier.padding(10.dp)
             ) {
                 Text(
-                    text = donghua.title,
-                    color = DongHiveTextPrimary,
+                    text = anime.title,
+                    color = AnimeDongTextPrimary,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
@@ -162,8 +152,8 @@ fun DonghuaCard(
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = donghua.genres.take(2).joinToString(" • "),
-                    color = DongHiveTextMuted,
+                    text = anime.latestReleaseDate.ifBlank { anime.releaseDay.ifBlank { "Update Harian" } },
+                    color = AnimeDongTextMuted,
                     fontSize = 11.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -174,8 +164,10 @@ fun DonghuaCard(
 }
 
 @Composable
-fun DonghuaHorizontalCard(
-    donghua: Donghua,
+fun AnimeHorizontalCard(
+    animeId: String,
+    title: String,
+    poster: String,
     subtitle: String,
     onClick: () -> Unit,
     trailingContent: (@Composable () -> Unit)? = null,
@@ -187,10 +179,10 @@ fun DonghuaHorizontalCard(
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
             .clickable(onClick = onClick)
-            .testTag("donghua_horizontal_${donghua.id}"),
+            .testTag("anime_horizontal_$animeId"),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = DongHiveCard),
-        border = androidx.compose.foundation.BorderStroke(1.dp, DongHiveCardBorder)
+        colors = CardDefaults.cardColors(containerColor = AnimeDongCard),
+        border = androidx.compose.foundation.BorderStroke(1.dp, AnimeDongCardBorder)
     ) {
         Row(
             modifier = Modifier
@@ -205,15 +197,15 @@ fun DonghuaHorizontalCard(
             ) {
                 AsyncImage(
                     model = ImageRequest.Builder(LocalContext.current)
-                        .data(donghua.coverUrl)
+                        .data(poster)
                         .crossfade(true)
                         .build(),
-                    contentDescription = donghua.title,
+                    contentDescription = title,
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
                 )
                 Surface(
-                    color = DongHiveBadgeHot.copy(alpha = 0.9f),
+                    color = AnimeDongBadgeHot.copy(alpha = 0.9f),
                     shape = RoundedCornerShape(bottomEnd = 6.dp),
                     modifier = Modifier.align(Alignment.TopStart)
                 ) {
@@ -233,25 +225,17 @@ fun DonghuaHorizontalCard(
                 modifier = Modifier.weight(1f)
             ) {
                 Text(
-                    text = donghua.title,
-                    color = DongHiveTextPrimary,
+                    text = title,
+                    color = AnimeDongTextPrimary,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Spacer(modifier = Modifier.height(3.dp))
-                Text(
-                    text = donghua.chineseTitle,
-                    color = DongHiveGold,
-                    fontSize = 11.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = subtitle,
-                    color = DongHiveTextSecondary,
+                    color = AnimeDongTextSecondary,
                     fontSize = 12.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -265,8 +249,8 @@ fun DonghuaHorizontalCard(
                             .fillMaxWidth()
                             .height(4.dp)
                             .clip(RoundedCornerShape(2.dp)),
-                        color = DongHiveGold,
-                        trackColor = DongHiveCardBorder
+                        color = AnimeDongGold,
+                        trackColor = AnimeDongCardBorder
                     )
                 }
             }
@@ -297,12 +281,12 @@ fun SectionHeader(
             Box(
                 modifier = Modifier
                     .size(width = 4.dp, height = 18.dp)
-                    .background(DongHiveGold, RoundedCornerShape(2.dp))
+                    .background(AnimeDongGold, RoundedCornerShape(2.dp))
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = title,
-                color = DongHiveTextPrimary,
+                color = AnimeDongTextPrimary,
                 fontSize = 17.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -311,7 +295,7 @@ fun SectionHeader(
         if (actionText != null && onActionClick != null) {
             Text(
                 text = actionText,
-                color = DongHiveGold,
+                color = AnimeDongGold,
                 fontSize = 13.sp,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier
@@ -334,12 +318,12 @@ fun GenreChip(
             .clip(RoundedCornerShape(20.dp))
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(20.dp),
-        color = if (isSelected) DongHiveGold else DongHiveCard,
-        border = if (isSelected) null else androidx.compose.foundation.BorderStroke(1.dp, DongHiveCardBorder)
+        color = if (isSelected) AnimeDongGold else AnimeDongCard,
+        border = if (isSelected) null else androidx.compose.foundation.BorderStroke(1.dp, AnimeDongCardBorder)
     ) {
         Text(
             text = text,
-            color = if (isSelected) DongHiveSurface else DongHiveTextSecondary,
+            color = if (isSelected) AnimeDongSurface else AnimeDongTextSecondary,
             fontSize = 12.sp,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
             modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp)
@@ -364,28 +348,28 @@ fun EmptyState(
         Box(
             modifier = Modifier
                 .size(72.dp)
-                .background(DongHiveCard, CircleShape)
-                .border(1.dp, DongHiveCardBorder, CircleShape),
+                .background(AnimeDongCard, CircleShape)
+                .border(1.dp, AnimeDongCardBorder, CircleShape),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = DongHiveGold,
+                tint = AnimeDongGold,
                 modifier = Modifier.size(36.dp)
             )
         }
         Spacer(modifier = Modifier.height(16.dp))
         Text(
             text = title,
-            color = DongHiveTextPrimary,
+            color = AnimeDongTextPrimary,
             fontSize = 16.sp,
             fontWeight = FontWeight.Bold
         )
         Spacer(modifier = Modifier.height(6.dp))
         Text(
             text = subtitle,
-            color = DongHiveTextMuted,
+            color = AnimeDongTextMuted,
             fontSize = 13.sp,
             textAlign = androidx.compose.ui.text.style.TextAlign.Center
         )

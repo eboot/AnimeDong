@@ -11,7 +11,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -39,25 +38,26 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.ui.components.PrivateDnsBlockedDialog
+import com.example.ui.components.PrivateDnsChecker
 import com.example.ui.screens.DetailScreen
 import com.example.ui.screens.HomeScreen
 import com.example.ui.screens.LibraryScreen
 import com.example.ui.screens.PlayerScreen
 import com.example.ui.screens.ProfileScreen
 import com.example.ui.screens.ScheduleScreen
-import com.example.ui.theme.DongHiveBg
-import com.example.ui.theme.DongHiveCard
-import com.example.ui.theme.DongHiveCardBorder
-import com.example.ui.theme.DongHiveGold
-import com.example.ui.theme.DongHiveSurface
-import com.example.ui.theme.DongHiveTextMuted
-import com.example.ui.theme.DongHiveTextPrimary
+import com.example.ui.theme.AnimeDongBg
+import com.example.ui.theme.AnimeDongCardBorder
+import com.example.ui.theme.AnimeDongGold
+import com.example.ui.theme.AnimeDongSurface
+import com.example.ui.theme.AnimeDongTextMuted
 import com.example.ui.theme.MyApplicationTheme
-import com.example.viewmodel.DongHiveViewModel
+import com.example.viewmodel.AnimeDongViewModel
 import com.example.viewmodel.Screen
 import kotlinx.coroutines.flow.collectLatest
 
@@ -71,7 +71,7 @@ data class NavItem(
 
 class MainActivity : ComponentActivity() {
 
-    private val viewModel: DongHiveViewModel by viewModels()
+    private val viewModel: AnimeDongViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -83,12 +83,20 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    override fun onResume() {
+        super.onResume()
+        // Check Private DNS every time app returns to foreground
+        viewModel.checkPrivateDns()
+    }
 }
 
 @Composable
-fun AnimeDongApp(viewModel: DongHiveViewModel) {
+fun AnimeDongApp(viewModel: AnimeDongViewModel) {
     val currentScreen by viewModel.currentScreen.collectAsState()
+    val isPrivateDnsBlocked by viewModel.isPrivateDnsBlocked.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
 
     LaunchedEffect(Unit) {
         viewModel.snackbarMessage.collectLatest { message ->
@@ -103,9 +111,9 @@ fun AnimeDongApp(viewModel: DongHiveViewModel) {
         NavItem(Screen.PROFILE, "Profil", Icons.Filled.Person, Icons.Outlined.Person, "nav_profile")
     )
 
-    // Back handling
+    // Hardware back handler
     BackHandler(enabled = currentScreen != Screen.HOME) {
-        if (!viewModel.handleBack()) {
+        if (!viewModel.navigateBack()) {
             viewModel.navigateTo(Screen.HOME)
         }
     }
@@ -121,18 +129,18 @@ fun AnimeDongApp(viewModel: DongHiveViewModel) {
     Scaffold(
         modifier = Modifier
             .fillMaxSize()
-            .background(DongHiveBg)
+            .background(AnimeDongBg)
             .windowInsetsPadding(WindowInsets.safeDrawing),
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         bottomBar = {
             if (isBottomBarVisible) {
                 NavigationBar(
-                    containerColor = DongHiveSurface,
+                    containerColor = AnimeDongSurface,
                     tonalElevation = 8.dp,
                     modifier = Modifier
                         .border(
                             width = 0.8.dp,
-                            color = DongHiveCardBorder
+                            color = AnimeDongCardBorder
                         )
                         .testTag("main_bottom_nav")
                 ) {
@@ -155,11 +163,11 @@ fun AnimeDongApp(viewModel: DongHiveViewModel) {
                                 )
                             },
                             colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = DongHiveBg,
-                                unselectedIconColor = DongHiveTextMuted,
-                                selectedTextColor = DongHiveGold,
-                                unselectedTextColor = DongHiveTextMuted,
-                                indicatorColor = DongHiveGold
+                                selectedIconColor = AnimeDongBg,
+                                unselectedIconColor = AnimeDongTextMuted,
+                                selectedTextColor = AnimeDongGold,
+                                unselectedTextColor = AnimeDongTextMuted,
+                                indicatorColor = AnimeDongGold
                             ),
                             modifier = Modifier.testTag(item.testTag)
                         )
@@ -180,6 +188,18 @@ fun AnimeDongApp(viewModel: DongHiveViewModel) {
                 Screen.PROFILE -> ProfileScreen(viewModel = viewModel)
                 Screen.DETAIL -> DetailScreen(viewModel = viewModel)
                 Screen.PLAYER -> PlayerScreen(viewModel = viewModel)
+            }
+
+            // Private DNS Blocking Dialog
+            if (isPrivateDnsBlocked) {
+                PrivateDnsBlockedDialog(
+                    onOpenSettings = {
+                        PrivateDnsChecker.openDnsSettings(context)
+                    },
+                    onRestart = {
+                        PrivateDnsChecker.restartApp(context)
+                    }
+                )
             }
         }
     }

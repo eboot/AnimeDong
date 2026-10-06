@@ -7,27 +7,26 @@ import androidx.room.RoomDatabase
 
 @Database(
     entities = [
-        FavoriteEntity::class,
-        HistoryEntity::class,
-        DownloadEntity::class,
+        WatchHistoryEntity::class,
+        BookmarkEntity::class,
         UserSessionEntity::class
     ],
-    version = 2,
+    version = 1,
     exportSchema = false
 )
-abstract class DongHiveDatabase : RoomDatabase() {
-    abstract fun donghuaDao(): DonghuaDao
+abstract class AnimeDongDatabase : RoomDatabase() {
+    abstract fun animeDongDao(): AnimeDongDao
 
     companion object {
         @Volatile
-        private var INSTANCE: DongHiveDatabase? = null
+        private var INSTANCE: AnimeDongDatabase? = null
 
-        fun getDatabase(context: Context): DongHiveDatabase {
+        fun getDatabase(context: Context): AnimeDongDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
-                    DongHiveDatabase::class.java,
-                    "donghive_database"
+                    AnimeDongDatabase::class.java,
+                    "animedong_database"
                 )
                     .fallbackToDestructiveMigration()
                     .build()
