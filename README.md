@@ -1,62 +1,124 @@
-# AnimeDong - Nonton Donghua & Anime Sub Indo
+# AnimeDong — Kotlin Native
 
-Aplikasi streaming dan katalog Donghua (Animasi 3D Mandarin) dan Anime modern, cepat, dan lengkap untuk Android yang dibangun menggunakan **Kotlin**, **Jetpack Compose**, **Material 3**, dan **Room Database**.
+Aplikasi Android streaming donghua & anime subtitle Indonesia —
+**Kotlin native** (Jetpack Compose + Clean Architecture + MVVM),
+nyambung ke DUA backend:
 
----
+| Konten | Backend | Base URL default |
+|---|---|---|
+| Anime | sankavollerei (tanpa auth) | `https://www.sankavollerei.web.id` |
+| Donghua | API sendiri di Oracle VPS (tanpa auth) | `http://168.110.213.108/donghua` |
 
-## Fitur Utama
+> Catatan: folder masih bernama `donghive-kotlin` (historis), tapi seluruh
+> identitas app sudah diganti jadi **AnimeDong** (`com.animedong.app`).
+> UI/UX sengaja dibuat beda dari Donghive — hasil reverse-engineering
+> Donghive 5.7 hanya dipakai sebagai referensi fitur.
 
-1. **Beranda (Home)**:
-   - **Spotlight Hero Banner**: Carousel donghua unggulan (Battle Through the Heavens, Perfect World, Soul Land II, Renegade Immortal) dengan tombol *Nonton Sekarang*.
-   - **Pencarian Real-Time**: Pencarian cepat berdasarkan judul Indonesia/Inggris, judul pinyin Mandarin, atau genre.
-   - **Filter Kategori & Status**: Filter chip interaktif (Semua, Xianxia, Aksi, Kultivasi, Fantasi, Sci-Fi, Komedi, Romansa, Ongoing, Tamat).
-   - **Episode Baru Hari Ini**: Deretan rilis episode harian terbaru dengan tag episode dan kualitas HD.
-   - **Top Popular Chart**: Peringkat donghua terpopuler dengan rating bintang dan jumlah penayangan.
-   - **Koleksi Lengkap**: Grid donghua responsif dengan badge status dan episode.
+## Fitur
 
-2. **Detail Donghua**:
-   - Sampul backdrop heroik & cover poster HD.
-   - Informasi lengkap: Judul asli Hanzi/Pinyin, studio animasi, status rilis, rating, tahun, dan genre.
-   - Sinopsis cerita interaktif yang dapat diperluas.
-   - **Daftar Episode Interaktif**: Pengelompokan episode (1-25, 26-50, dst.) dengan durasi, tanggal rilis, dan tombol tonton instan.
-   - Tombol **Favorit / Bookmark** tersimpan langsung ke database lokal.
-   - Rekomendasi donghua serupa.
+- Beranda dengan toggle **Anime | Donghua**: spotlight, rail, dan grid
+  per tipe konten (section mengikuti nama asli dari API — tidak ada
+  label karangan)
+- Jadwal mingguan per tipe konten (chip hari Senin–Minggu)
+- Detail + Bookmark (Room, kolom `content_type`), Riwayat nonton
+- Player anime: Media3 ExoPlayer + ganti server (resolve serverId)
+- Player donghua: WebView + pilih server (URL embed langsung dari API)
+- Firebase: Remote Config, Crashlytics, Auth (Google), Firestore,
+  FCM, Analytics, App Check (Play Integrity)
+- AdMob: banner (Beranda & Detail) + interstitial maksimal **1x per 30 menit**
+  untuk user non-premium, hanya di jeda natural (tidak memotong video)
+- Premium: status dari Firestore `users/{uid}/subscription/current`;
+  user premium = nol iklan
+- Larangan Private DNS: dialog non-dismissable dengan tombol
+  **Buka Pengaturan DNS** dan **Restart AnimeDong**
 
-3. **Pemutar Video (Video Player)**:
-   - Pemutar video dengan kontrol interaktif: Putar/Jeda, Maju 10 detik, Mundur 10 detik, Slider linier timeline.
-   - **Multi-Server Streaming**: Server VIP (1080p Ultra HD), Server Fast CDN (720p HD), dan Server Mirror Hemat Kuota.
-   - **Pengaturan Pemutar**: Pengatur kecepatan (0.75x hingga 2.0x), pemilihan resolusi, dan sakelar otomatis putar episode selanjutnya.
-   - **Pemilih Episode Cepat**: Mengganti episode langsung dari bawah pemutar tanpa kembali ke menu.
-   - **Diskusi Penonton**: Kolom komentar interaktif untuk berbagi tanggapan tanpa spoiler.
+## Cara jalanin
 
-4. **Jadwal Rilis Mingguan (Schedule)**:
-   - Kalender rilis harian (Senin hingga Minggu) sesuai waktu WIB.
-   - Jam tayang tepat, indikator status rilis, dan tombol pengingat (notifikasi).
+```bash
+# Buka di Android Studio (Koala+), sync Gradle, Run.
+# Atau via command line:
+./gradlew installDebug
+```
 
-5. **Koleksi & Pustaka (Library)**:
-   - **Favorit**: Menyimpan judul-judul kesukaan Anda secara permanen.
-   - **Riwayat Tonton**: Melacak progres tontonan dengan penanda waktu terakhir dan progress bar untuk melanjutkan kapan saja.
-   - **Unduhan**: Menyimpan episode untuk ditonton secara offline saat bepergian atau hemat kuota.
-   - Didukung penyimpanan lokal reaktif **Room Database**.
+Butuh: JDK 17, Android SDK 35.
 
-6. **Profil, Akun Google & Pengaturan (Profile)**:
-   - **Google Sign-In Native (Credential Manager)**: Masuk mudah dan aman dengan akun Google tanpa perlu konfigurasi Firebase.
-   - **Sinkronisasi Data Akun**: Sinkronkan daftar Favorit dan Riwayat tontonan ke profil pengguna.
-   - **Mode Tamu & Profil VIP**: Transisi mulus antara akun Tamu dan Akun Google dengan lencana VIP aktif.
-   - **Penyimpanan Sesi Lokal**: Terintegrasi ke Room Database (`UserSessionEntity`).
-   - Pengaturan kualitas streaming bawaan dan unduhan via Wi-Fi.
-   - Pembersih cache aplikasi (Cache cleaner).
-   - Tautan komunitas Telegram Donghua Indonesia.
+## Setup wajib sebelum run
 
----
+1. **Firebase**: buat project di Firebase Console untuk package
+   `com.animedong.app`, download `google-services.json` asli → taruh di
+   `app/`. Tanpa file ini app tidak akan jalan (disengaja, anti-mock).
+   Aktifkan: Authentication (Google), Firestore, FCM, Crashlytics,
+   Remote Config, App Check (Play Integrity).
+2. **Google Sign-In**: isi `GOOGLE_WEB_CLIENT_ID` di
+   `data/auth/AuthManager.kt` dengan Web Client ID dari Firebase Console.
+3. **AdMob**: build debug otomatis pakai test ad unit ID. Untuk release,
+   ganti `admobAppId` di `app/build.gradle.kts` (blok `release`) dengan
+   App ID asli, dan isi `admob_banner_unit_id` /
+   `admob_interstitial_unit_id` di Remote Config.
+4. **Remote Config keys** (lihat `data/remote/RemoteConfigManager.kt`
+   untuk default): `api_base_url`, `donghua_api_base_url`,
+   `default_quality`, `server_picker_enabled`, `min_app_version`,
+   `ads_enabled`, `admob_banner_unit_id`, `admob_interstitial_unit_id`,
+   `blocked_dns_hosts`, `debug_force_premium`.
+5. **HTTP API donghua**: cleartext hanya diizinkan untuk host
+   `168.110.213.108` via `app/src/main/res/xml/network_security_config.xml`.
+   Kalau base URL donghua pindah host/HTTPS, sesuaikan file itu.
 
-## Arsitektur & Teknologi
+## Struktur
 
-- **Bahasa**: Kotlin 2.2
-- **UI Framework**: Jetpack Compose dengan Material Design 3
-- **Autentikasi**: Android Credential Manager (`androidx.credentials` + `com.google.android.libraries.identity.googleid`)
-- **Database Lokal**: Android Room Database (KSP) dengan reaktif `Flow` & `StateFlow`
-- **Arsitektur**: MVVM (Model-View-ViewModel) + Repository Pattern
-- **Image Loader**: Coil Compose
-- **Media**: Android Native Media Player Engine dengan custom Compose overlay
-- **Adaptive Launcher Icon**: Ikon bertema ornamen sarang lebah emas & naga donghua (`#12131C`)
+```
+app/src/main/java/com/animedong/app/
+├── MainActivity.kt              # + dialog blokir Private DNS (cek tiap onResume)
+├── AnimeDongApp.kt              # init Firebase, App Check, MobileAds, Remote Config
+├── di/AppContainer.kt           # manual DI
+├── core/
+│   ├── network/                 # AnimeApiService + DonghuaApiService
+│   │                            # (base URL bisa diganti via Remote Config)
+│   ├── theme/                   # AnimeDongTheme (aksen kuning #FFC107, navy gelap)
+│   └── ui/AnimeCard.kt
+├── data/
+│   ├── dto/                     # DTO persis struktur JSON backend (+ DonghuaDtos)
+│   ├── local/                   # Room v2 (watch_history, bookmarks + content_type)
+│   │                            # + PrefsManager (DataStore)
+│   ├── remote/RemoteConfigManager.kt
+│   ├── repository/AnimeRepository.kt    # DTO -> domain mapping (anime + Room)
+│   ├── repository/DonghuaRepository.kt # DTO -> domain mapping (donghua)
+│   ├── ads/AdManager.kt         # banner + interstitial (throttle 30 mnt)
+│   ├── auth/AuthManager.kt      # Google Sign-In via Credential Manager
+│   ├── billing/BillingRepositoryImpl.kt  # status premium dari Firestore
+│   ├── dns/DnsChecker.kt        # deteksi Private DNS + restart app
+│   └── messaging/               # FCM service
+├── domain/
+│   ├── model/                   # model bersih untuk UI
+│   └── billing/BillingRepository.kt    # interface status premium
+└── presentation/
+    ├── navigation/NavGraph.kt   # route: detail/{type}/{id}, player/{type}/{id}
+    ├── home/ detail/ schedule/ library/
+    ├── player/                  # PlayerScreen (anime, ExoPlayer)
+    │                            # + DonghuaPlayerScreen (donghua, WebView)
+    └── profile/                 # layar "Saya": auth + status premium + upgrade
+```
+
+## Alur nonton
+
+1. Beranda → toggle Anime/Donghua → tap poster → `detail/{type}/{id}`
+2. Detail → tap episode → (cek interstitial maks 1x/30 mnt) → `player/{type}/{id}`
+3. Player anime: autoplay `defaultStreamingUrl` (Media3 ExoPlayer);
+   "Ganti Server" → bottom sheet kualitas → server list
+   → `GET anime/server/{serverId}` → URL final → play
+4. Player donghua: WebView membuka URL embed dari
+   `GET /episode/{episodeSlug}` → `players[{name, url}]`;
+   "Ganti Server" → pilih nama server → WebView reload
+5. Keluar player anime → posisi tersimpan ke Room `watch_history`;
+   donghua hanya tercatat "sudah ditonton" (embed tidak bisa resume)
+
+## TODO sebelum production
+
+- [ ] `resolveServerUrl()`: cek bentuk asli `data` dari `/anime/server/{id}`
+      (pernah 404 karena ID expired), sesuaikan parsing
+- [ ] Integrasi Google Play Billing asli di `BillingRepositoryImpl.launchPurchase()`
+      (saat ini stub "segera hadir")
+- [ ] Verifikasi intent `android.settings.PRIVATE_DNS_SETTINGS` di HP asli
+      (ada fallback ke Wireless Settings)
+- [ ] Cron/server terpisah untuk push notifikasi episode baru via FCM
+- [ ] `app-ads.txt`, signing release, `bundleRelease`
