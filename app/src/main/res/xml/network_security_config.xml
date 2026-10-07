@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Cleartext hanya diizinkan untuk host API donghua (belum ada HTTPS).
+     Host lain tetap diblokir (usesCleartextTraffic=false di manifest).
+     Kalau base URL donghua pindah host, tambah <domain> di sini. -->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">168.110.213.108</domain>
+    </domain-config>
+</network-security-config>
