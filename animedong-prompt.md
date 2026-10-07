@@ -20,7 +20,7 @@ Identitas baru (wajib dipakai di semua tempat):
 - Bahasa UI: Indonesia santai. Dark theme.
 
 Backend sudah ada dan JANGAN diubah strukturnya:
-- Base URL default: `https://www.sankavollerei.web.id`
+- Base URL default: `http://168.110.213.108`
 - API scraping **tanpa auth**. Tidak ada endpoint login, search, atau user.
   Jangan mengasumsikan endpoint yang tidak ada di daftar.
 
@@ -30,11 +30,11 @@ Semua response dibungkus: `{ "ok": true, "statusCode": 200, "message": "", "data
 
 | Method | Endpoint | Dipakai untuk | Catatan |
 |---|---|---|---|
-| GET | `/anime/home` | Home | `data.ongoing.animeList[]`, `data.completed.animeList[]` |
-| GET | `/anime/schedule` | Jadwal | Array `{ day, anime_list[] }`, day = Senin..Minggu |
-| GET | `/anime/anime/{animeId}` | Detail | Termasuk `episodeList[{episodeId, title, eps, date}]` |
-| GET | `/anime/episode/{episodeId}` | Player | Termasuk `defaultStreamingUrl`, `server.qualities[{title, serverList[{title, serverId}]}]`, prev/next |
-| GET | `/anime/server/{serverId}` | Player | Return URL video final |
+| GET | `/api/home` | Home | `data.ongoing.animeList[]`, `data.completed.animeList[]` |
+| GET | `/api/schedule` | Jadwal | Array `{ day, anime_list[] }`, day = Senin..Minggu |
+| GET | `/api/anime/{animeId}` | Detail | Termasuk `episodeList[{episodeId, title, eps, date}]` |
+| GET | `/api/episode/{episodeId}` | Player | Termasuk `defaultStreamingUrl`, `server.qualities[{title, serverList[{title, serverId}]}]`, prev/next |
+| GET | `/api/server/{serverId}` | Player | Return URL video final |
 
 Field item anime: `title, poster, episodes, releaseDay, latestReleaseDate`,
 id bisa bernama `animeId` ATAU `slug` — normalisasi ke satu field `id`.
@@ -97,7 +97,7 @@ Prasyarat (sebelum coding):
 Urutan pengerjaan (satu layanan selesai & terverifikasi baru lanjut):
 
 1. **Remote Config** — keys wajib:
-   `api_base_url` (default `https://www.sankavollerei.web.id`),
+   `api_base_url` (default `http://168.110.213.108`),
    `default_quality` (`480p`), `server_picker_enabled` (`true`),
    `min_app_version` (`1`), `ads_enabled` (`true`),
    `admob_banner_unit_id`, `admob_interstitial_unit_id`,
