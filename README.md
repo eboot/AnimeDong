@@ -42,6 +42,9 @@ nyambung ke DUA backend:
 
 Butuh: JDK 17, Android SDK 35.
 
+> Kalau `./gradlew` balas `Permission denied` (biasa kejadian habis
+> extract zip), jalankan sekali: `chmod +x gradlew`
+
 ## Setup wajib sebelum run
 
 1. **Firebase**: buat project di Firebase Console untuk package
