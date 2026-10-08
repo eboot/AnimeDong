@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.AnimeDong" parent="Theme.Material3.DayNight.NoActionBar">
+    <!-- Parent pakai framework (bukan Material Components): app ini full Compose,
+         theming-nya di Kotlin. Theme XML cuma untuk launch window. -->
+    <style name="Theme.AnimeDong" parent="android:Theme.Material.NoActionBar">
         <item name="android:windowBackground">@color/animedong_bg</item>
         <item name="android:statusBarColor">@color/animedong_bg</item>
         <item name="android:navigationBarColor">@color/animedong_bg</item>
