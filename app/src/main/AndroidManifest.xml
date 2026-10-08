@@ -24,6 +24,14 @@
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="${admobAppId}" />
 
+        <!-- Fix konflik manifest merger: play-services-ads-lite dan
+             play-services-measurement-api (firebase-analytics) sama-sama
+             mendeklarasikan AD_SERVICES_CONFIG. Pilih versi AdMob. -->
+        <property
+            android:name="android.adservices.AD_SERVICES_CONFIG"
+            android:resource="@xml/gma_ad_services_config"
+            tools:replace="android:resource" />
+
         <service
             android:name=".data.messaging.AnimeDongMessagingService"
             android:exported="false">
